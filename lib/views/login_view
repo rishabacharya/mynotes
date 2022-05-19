@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mynotes/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class LogInView extends StatefulWidget {
+  const LogInView({Key? key}) : super(key: key);
+
+  @override
+  State<LogInView> createState() => _LogInViewState();
+}
+
+class _LogInViewState extends State<LogInView> {
+  late final TextEditingController _email, _password;
+
+  @override
+  void initState() {
+    _email = TextEditingController();
+    _password = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.red,
+        title: const Text('Log In'),
+      ),
+      body: FutureBuilder(
+          future:Firebase.initializeApp(
+                   options: DefaultFirebaseOptions.currentPlatform,
+                   ),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.done:
+                return Column(
+                  children: [
+                    TextField(
+                      controller: _email,
+                      enableSuggestions: true,
+                      autocorrect: false,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        hintText: "Enter your email here",
+                      ),
+                    ),
+                    TextField(
+                      controller: _password,
+                      obscureText: true,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      decoration: const InputDecoration(
+                        hintText: "Enter your password here",
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        print("Now, we will start logging in");
+                        final email = _email.text;
+                        final password = _password.text;
+                        try{
+                          final userCredential = await FirebaseAuth.instance
+                            .signInWithEmailAndPassword(
+                                email: email, password: password);
+                      
+                          print(userCredential);
+                        }on FirebaseAuthException catch(e){
+                              if(e.code=='user-not-found'){
+                                print('User not found');
+                              }
+                              else if(e.code=='wrong-password'){
+
+                                print('Wrong password');
+                              }
+                              else{
+                                print('Something else happened');
+                                print(e.code);
+                              }
+                          }
+                      },
+                      child: const Text('Log in'),
+                    ),
+                  ],
+                );
+              default:
+                return const Text('loading...');
+            }
+          }),
+    );
+  }
+}
